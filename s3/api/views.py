@@ -5,8 +5,13 @@
 import os
 import json
 import shutil
+import base64
 from s3 import constants
 from django.http import HttpResponse
+from poster.encode import multipart_encode
+from poster.streaminghttp import register_openers
+
+register_openers()
 
 
 def json_to_response(json_data):
@@ -21,7 +26,7 @@ def verify_secret(func):
         if secret and secret == constants.SECRET:
             return func(request, *args, **kwargs)
         else:
-            return json_to_response({'Auth failed'})
+            return json_to_response({'message': 'Auth failed', 'code': 1})
 
     return func_wrapper
 
@@ -72,19 +77,23 @@ def get_bucket(request):
 def put_object(request):
     bucket = request.POST.get('bucket', None)
     object_name = request.POST.get('object_name', None)
-    content = request.POST.get('content', None)
+    content = request.POST.get('content', None) or request.FILES.get('content', None)
     if bucket and object_name and content:
         if os.path.exists(os.path.join(constants.STATIC, bucket, object_name)):
             return json_to_response({'message': 'object existed', 'code': 1})
         else:
             try:
-                with open(os.path.join(constants.STATIC, bucket, object_name), 'w') as f:
-                    f.write(content)
+                if isinstance(content, unicode):
+                    with open(os.path.join(constants.STATIC, bucket, object_name), 'w') as f:
+                        f.write(content.encode('utf-8'))
+                else:
+                    with open(os.path.join(constants.STATIC, bucket, object_name), 'w') as f:
+                        f.write(content.read())
                 return json_to_response({'code': 0, 'data': ''})
             except:
                 return json_to_response({'message': 'No bucket', 'code': 1})
     else:
-        return json_to_response({'message': 'Miss Params'})
+        return json_to_response({'message': 'Miss Params', 'code': 1})
 
 
 @verify_secret
@@ -93,13 +102,14 @@ def get_object(request):
     object_name = request.POST.get('object_name', None)
     if bucket and object_name:
         try:
-            with open(os.path.join(constants.STATIC, bucket, object_name)) as f:
+            with open(os.path.join(constants.STATIC, bucket, object_name), 'rb') as f:
                 data = f.read()
-            return {'code': 0, 'data': data}
-        except:
-            return {'message': 'No object', 'code': 1}
+            return json_to_response({'code': 0, 'data': base64.b64encode(data)})
+        except Exception, e:
+            print e
+            return json_to_response({'message': 'No object', 'code': 1})
     else:
-        return json_to_response({'message': 'Miss Params'})
+        return json_to_response({'message': 'Miss Params', 'code': 1})
 
 
 @verify_secret
@@ -109,8 +119,8 @@ def delete_object(request):
     if bucket and object_name:
         try:
             os.remove(os.path.join(constants.STATIC, bucket, object_name))
-            return {'code': 0, 'data': ''}
+            return json_to_response({'code': 0, 'data': ''})
         except:
-            return {'message': 'No object', 'code': 1}
+            return json_to_response({'message': 'No object', 'code': 1})
     else:
-        return json_to_response({'message': 'Miss Params'})
+        return json_to_response({'message': 'Miss Params', 'code': 1})
