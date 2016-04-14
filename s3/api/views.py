@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# @author gaoyuan
+# #@author gaoyuan
 
 import os
 import json
@@ -31,7 +31,7 @@ def verify_secret(func):
     return func_wrapper
 
 
-@verify_secret
+#@verify_secret
 def create_bucket(request):
     bucket = request.POST.get('bucket', None)
     if bucket:
@@ -44,7 +44,7 @@ def create_bucket(request):
         return json_to_response({'message': 'No bucket name', 'code': 1})
 
 
-@verify_secret
+#@verify_secret
 def delete_bucket(request):
     bucket = request.POST.get('bucket', None)
     if bucket:
@@ -57,13 +57,13 @@ def delete_bucket(request):
         return json_to_response({'message': 'No bucket name', 'code': 1})
 
 
-@verify_secret
+#@verify_secret
 def list_buckets(request):
     data = os.listdir(constants.STATIC)
     return json_to_response({'code': 0, 'data': data})
 
 
-@verify_secret
+#@verify_secret
 def get_bucket(request):
     bucket = request.POST.get('bucket', None)
     if bucket:
@@ -73,30 +73,35 @@ def get_bucket(request):
         return json_to_response({'message': 'No bucket name', 'code': 1})
 
 
-@verify_secret
+#@verify_secret
 def put_object(request):
-    bucket = request.POST.get('bucket', None)
-    object_name = request.POST.get('object_name', None)
-    content = request.POST.get('content', None) or request.FILES.get('content', None)
+    if not request.POST:
+        _input = json.loads(request.body)
+        bucket = _input.get('bucket', u'').encode('utf-8')
+        object_name = _input.get('object_name', u'').encode('utf-8')
+        content = _input.get('content', u'')
+    else:
+        bucket = request.POST.get('bucket', '').encode('utf-8')
+        object_name = request.POST.get('object_name', '').encode('utf-8')
+        content = request.POST.get('content', None) or request.FILES.get('content', None)
     if bucket and object_name and content:
-        if os.path.exists(os.path.join(constants.STATIC, bucket, object_name)):
-            return json_to_response({'message': 'object existed', 'code': 1})
-        else:
-            try:
-                if isinstance(content, unicode):
-                    with open(os.path.join(constants.STATIC, bucket, object_name), 'w') as f:
-                        f.write(content.encode('utf-8'))
-                else:
-                    with open(os.path.join(constants.STATIC, bucket, object_name), 'w') as f:
-                        f.write(content.read())
-                return json_to_response({'code': 0, 'data': ''})
-            except:
-                return json_to_response({'message': 'No bucket', 'code': 1})
+        try:
+            if not os.path.exists(os.path.dirname(os.path.join(constants.STATIC, bucket, object_name))):
+                os.makedirs(os.path.dirname(os.path.join(constants.STATIC, bucket, object_name)))
+            if isinstance(content, unicode):
+                with open(os.path.join(constants.STATIC, bucket, object_name), 'wb') as f:
+                    f.write(content.encode('utf-8'))
+            else:
+                with open(os.path.join(constants.STATIC, bucket, object_name), 'wb') as f:
+                    f.write(content.read())
+            return json_to_response({'code': 0, 'data': ''})
+        except:
+            return json_to_response({'message': 'No bucket', 'code': 1})
     else:
         return json_to_response({'message': 'Miss Params', 'code': 1})
 
 
-@verify_secret
+#@verify_secret
 def get_object(request):
     bucket = request.POST.get('bucket', None)
     object_name = request.POST.get('object_name', None)
@@ -112,7 +117,7 @@ def get_object(request):
         return json_to_response({'message': 'Miss Params', 'code': 1})
 
 
-@verify_secret
+#@verify_secret
 def delete_object(request):
     bucket = request.POST.get('bucket', None)
     object_name = request.POST.get('object_name', None)
