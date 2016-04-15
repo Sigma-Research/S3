@@ -9,7 +9,7 @@ import cv2
 import json
 import os
 import re
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from s3.constants import STATIC
 
 
@@ -34,15 +34,25 @@ def processing(request, name):
     if w or h:
         w = w if w else int(width * 1.0 / height * h + 0.5)
         h = h if h else int(height * 1.0 / width * w + 0.5)
-    img = cv2.resize(img, (w, h))
+        img = cv2.resize(img, (w, h))
+        height, width = img.shape[:2]
     a = re.findall('(\d+)-(\d+)-(\d+)-(\d+)a', option)
     if a:
         x, y, w, h = a[-1]
-        img = img[y: y + h, x: x + w]
+        if x < width and y < height:
+            img = img[y: y + h, x: x + w]
     q = re.findall('(\d+)q', option)
     if q:
         q = q[-1]
     else:
         q = 90
-    data = cv2.imencode(ext, img, [1, q])[1].tostring()
-    return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
+    try:
+        ret, buf = cv2.imencode(ext, img, [1, q])
+    except Exception, e:
+        print e
+        return HttpResponseRedirect('/%s' % object_name)
+    if ret:
+        data = buf.tostring()
+        return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
+    else:
+        return HttpResponseRedirect('/%s' % object_name)
