@@ -27,10 +27,10 @@ def processing(request, name):
     ext = ext if ext else '.jpg'
     w = re.findall('(\d+)w', option)
     if w:
-        w = w[-1]
+        w = int(w[-1])
     h = re.findall('(\d+)h', option)
     if h:
-        h = h[-1]
+        h = int(h[-1])
     if w or h:
         w = w if w else int(width * 1.0 / height * h + 0.5)
         h = h if h else int(height * 1.0 / width * w + 0.5)
@@ -38,21 +38,17 @@ def processing(request, name):
         height, width = img.shape[:2]
     a = re.findall('(\d+)-(\d+)-(\d+)-(\d+)a', option)
     if a:
-        x, y, w, h = a[-1]
+        x, y, w, h = [int(i) for i in a[-1]]
         if x < width and y < height:
             img = img[y: y + h, x: x + w]
     q = re.findall('(\d+)q', option)
     if q:
-        q = q[-1]
+        q = int(q[-1])
     else:
         q = 90
     try:
-        ret, buf = cv2.imencode(ext, img, [1, q])
+        data = cv2.imencode(ext, img, [1, q])[1].tostring()
+        return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
     except Exception, e:
         print e
-        return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
-    if ret:
-        data = buf.tostring()
-        return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
-    else:
         return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
