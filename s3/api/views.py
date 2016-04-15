@@ -8,7 +8,6 @@ import shutil
 import base64
 from s3 import constants
 from django.http import HttpResponse
-from poster.encode import multipart_encode
 from poster.streaminghttp import register_openers
 
 register_openers()
@@ -95,7 +94,8 @@ def put_object(request):
                 with open(os.path.join(constants.STATIC, bucket, object_name), 'wb') as f:
                     f.write(content.read())
             return json_to_response({'code': 0, 'data': ''})
-        except:
+        except Exception, e:
+            print e
             return json_to_response({'message': 'No bucket', 'code': 1})
     else:
         return json_to_response({'message': 'Miss Params', 'code': 1})
