@@ -50,9 +50,9 @@ def processing(request, name):
         ret, buf = cv2.imencode(ext, img, [1, q])
     except Exception, e:
         print e
-        return HttpResponseRedirect('/%s' % object_name)
+        return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
     if ret:
         data = buf.tostring()
         return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
     else:
-        return HttpResponseRedirect('/%s' % object_name)
+        return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
