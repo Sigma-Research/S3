@@ -117,7 +117,7 @@ def version2(request, object_name, option):
 
     q = re.findall('/quality,q_(\d+)', option)
     Q = q if q else re.findall('/quality,Q_(\d+)', option)
-    q = Q if Q else 90
+    q = int(Q[-1]) if Q else 90
 
     try:
         return HttpResponse(compress(q, ext, img), content_type='image/%s' % (ext[1:]))
