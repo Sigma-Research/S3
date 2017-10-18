@@ -23,7 +23,7 @@ def processing(request, name):
     if '@' in name:
         object_name, option = name.split('@', 1)
         _Ver = 1
-    elif 'x-oss_process' in request.GET:
+    elif 'x-oss-process' in request.GET:
         object_name = name
         option = request.GET.get('x-oss_process')[0]
         _Ver = 2
