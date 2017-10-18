@@ -23,28 +23,27 @@ def processing(request, name):
     if '@' in name:
         object_name, option = name.split('@', 1)
         _Ver = 1
-    elif '?' in name:
-        object_name, option = name.split('?', 1)
+    elif 'x-oss_process' in request.GET:
+        object_name = name
+        option = request.GET.get('x-oss_process')[0]
         _Ver = 2
 
     img = cv2.imread(os.path.join(STATIC, bucket, object_name))
     height, width = img.shape[:2]
-    _, ext = os.path.splitext(option)
-    ext = ext if ext else '.jpg'
 
     if _Ver == 1:
+        _, ext = os.path.splitext(option)
+        ext = ext if ext else '.jpg'
         w = re.findall('(\d+)w', option)
-    elif _Ver == 2:
-        w = re.findall('w_(\d+)', option)
-    if w:
-        w = int(w[-1])
-
-    if _Ver == 1:
         h = re.findall('(\d+)h', option)
-    elif _Ver == 2:
+    else:
+        ext = re.findall('/format,(\w+)', option)
+        ext = ext[0] if ext else '.jpg'
+        w = re.findall('w_(\d+)', option)
         h = re.findall('h_(\d+)', option)
-    if h:
-        h = int(h[-1])
+
+    w = int(w[-1]) if w else w
+    h = int(h[-1]) if h else h
 
     if w or h:
         w = w if w else int(width * 1.0 / height * h + 0.5)
