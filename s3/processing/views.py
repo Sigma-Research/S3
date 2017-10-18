@@ -63,21 +63,25 @@ def processing(request, name):
         h = h or height
         if x < width and y < height:
             img = img[y: y + h, x: x + w]
-    
-    r = re.findall('(\d+)r', option)
+
+    if _Ver == 1:
+        r = re.findall('(\d+)r', option)
+    elif _Ver == 2:
+        r = re.findall('rotate,(\d+)', option)
+
     if r:
         r = int(r[-1])
         if r == 90:
             img = cv2.flip(cv2.transpose(img), 1)
         elif r == 180:
-            img= cv2.flip(img, -1)
+            img = cv2.flip(img, -1)
         elif r == 270:
             img = cv2.flip(cv2.transpose(img), 0)
 
     if _Ver == 1:
         q = re.findall('(\d+)q', option)
     elif _Ver == 2:
-        q = re.findall('rotate,(\d+)', option)
+        q = re.findall('quality,q_(\d+)', option)
 
     if q:
         q = int(q[-1])
