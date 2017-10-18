@@ -107,7 +107,7 @@ def version2(request, object_name, option):
             h = re.findall('h_(\d+)', cmd)
             (height, width), img = resize(w, h, height, width, img)
         elif cmd.startswith('crop'):
-            x, y, w, h = map(int, re.findall('crop,x_(\d+),y_(\d+),w_(\d+),h_(\d+)', cmd).groups())
+            x, y, w, h = map(int, re.search('crop,x_(\d+),y_(\d+),w_(\d+),h_(\d+)', cmd).groups())
             (height, width), img = crop(x, y, w, h, height=height, width=width, img=img)
         elif cmd.startswith('rotate'):
             r = int(re.findall('rotate,(\d+)', cmd)[0])
