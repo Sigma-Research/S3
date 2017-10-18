@@ -105,6 +105,8 @@ def version2(request, object_name, option):
         if cmd.startswith('resize'):
             w = re.findall('w_(\d+)', cmd)
             h = re.findall('h_(\d+)', cmd)
+            w = int(w[-1]) if w else w
+            h = int(h[-1]) if h else h
             (height, width), img = resize(w, h, height, width, img)
         elif cmd.startswith('crop'):
             x, y, w, h = map(int, re.search('crop,x_(\d+),y_(\d+),w_(\d+),h_(\d+)', cmd).groups())
