@@ -15,7 +15,7 @@ register_openers()
 
 def json_to_response(json_data):
     response = json.dumps(json_data)
-    return HttpResponse(response, mimetype='application/json')
+    return HttpResponse(response, content_type='application/json')
 
 
 def verify_secret(func):
@@ -74,23 +74,18 @@ def get_bucket(request):
 
 #@verify_secret
 def put_object(request):
-    if not request.POST:
-        _input = json.loads(request.body)
-        bucket = _input.get('bucket', u'').encode('utf-8')
-        object_name = _input.get('object_name', u'').encode('utf-8')
-        content = _input.get('content', u'')
-    else:
-        bucket = request.POST.get('bucket', '').encode('utf-8')
-        object_name = request.POST.get('object_name', '').encode('utf-8')
-        content = request.POST.get('content', None) or request.FILES.get('content', None)
-    if bucket and object_name and content:
+    bucket = request.POST.get('bucket', '').encode('utf-8')
+    object_name = request.POST.get('object_name', '').encode('utf-8')
+    content = request.POST.get('content', None)
+    if bucket and object_name:
         try:
             if not os.path.exists(os.path.dirname(os.path.join(constants.STATIC, bucket, object_name))):
                 os.makedirs(os.path.dirname(os.path.join(constants.STATIC, bucket, object_name)))
-            if isinstance(content, unicode):
+            if content:
                 with open(os.path.join(constants.STATIC, bucket, object_name), 'wb') as f:
-                    f.write(content.encode('utf-8'))
+                    f.write(base64.b64decode(content.encode('utf-8')))
             else:
+                content = request.FILES.get('content')
                 with open(os.path.join(constants.STATIC, bucket, object_name), 'wb') as f:
                     f.write(content.read())
             return json_to_response({'code': 0, 'data': ''})
@@ -116,6 +111,18 @@ def get_object(request):
     else:
         return json_to_response({'message': 'Miss Params', 'code': 1})
 
+
+def list_objects(request):
+    bucket = request.POST.get('bucket', None)
+    path = request.POST.get('path', None)
+    if bucket and path:
+        if os.path.isdir(os.path.join(constants.STATIC, bucket, path)):
+            return json_to_response({'code': 0, 'data': os.listdir(os.path.join(constants.STATIC, bucket, path))})
+        else:
+            return json_to_response({'code': 0, 'data': []})
+    else:
+        return json_to_response({'message': 'Miss Params', 'code': 1})
+    
 
 #@verify_secret
 def delete_object(request):

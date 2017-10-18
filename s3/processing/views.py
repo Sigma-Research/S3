@@ -15,7 +15,7 @@ from s3.constants import STATIC
 
 def json_to_response(json_data):
     response = json.dumps(json_data)
-    return HttpResponse(response, mimetype='application/json')
+    return HttpResponse(response, content_type='application/json')
 
 
 def processing(request, name):
@@ -39,8 +39,19 @@ def processing(request, name):
     a = re.findall('(\d+)-(\d+)-(\d+)-(\d+)a', option)
     if a:
         x, y, w, h = [int(i) for i in a[-1]]
+        w = w or width
+        h = h or height
         if x < width and y < height:
             img = img[y: y + h, x: x + w]
+    r = re.findall('(\d+)r', option)
+    if r:
+        r = int(r[-1])
+        if r == 90:
+            img = cv2.flip(cv2.transpose(img), 1)
+        elif r == 180:
+            img= cv2.flip(img, -1)
+        elif r == 270:
+            img = cv2.flip(cv2.transpose(img), 0)
     q = re.findall('(\d+)q', option)
     if q:
         q = int(q[-1])
@@ -48,7 +59,7 @@ def processing(request, name):
         q = 90
     try:
         data = cv2.imencode(ext, img, [1, q])[1].tostring()
-        return HttpResponse(data, mimetype='image/%s' % (ext[1:]))
+        return HttpResponse(data, content_type='image/%s' % (ext[1:]))
     except Exception, e:
         print e
         return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
