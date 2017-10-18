@@ -91,6 +91,8 @@ def processing(request, name):
         q = re.findall('(\d+)q', option)
     elif _Ver == 2:
         q = re.findall('quality,q_(\d+)', option)
+        Q = q if q else re.findall('quality,Q_(\d+)', option)
+        q = Q if Q else q
 
     if q:
         q = int(q[-1])
