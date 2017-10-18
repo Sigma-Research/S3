@@ -22,7 +22,7 @@ def json_to_response(json_data):
 def processing(request, name):
     if '@' in name:
         object_name, option = name.split('@', 1)
-        return version1(request, object_name, name)
+        return version1(request, object_name, option)
     elif 'x-oss-process' in request.GET:
         object_name = name
         option = request.GET.get('x-oss-process')
@@ -115,9 +115,8 @@ def version2(request, object_name, option):
             r = int(re.findall('rotate,(\d+)', cmd)[0])
             img = rotate(r, img)
 
-    q = re.findall('/quality,q_(\d+)', option)
-    Q = q if q else re.findall('/quality,Q_(\d+)', option)
-    q = int(Q[-1]) if Q else 90
+    q = re.findall('/quality,[q,Q]_(\d+)', option)
+    q = int(q[-1]) if q else 90
 
     try:
         return HttpResponse(compress(q, ext, img), content_type='image/%s' % (ext[1:]))
