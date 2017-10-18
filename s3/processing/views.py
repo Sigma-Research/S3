@@ -54,11 +54,20 @@ def processing(request, name):
 
     if _Ver == 1:
         a = re.findall('(\d+)-(\d+)-(\d+)-(\d+)a', option)
+        if a:
+            x, y, w, h = [int(i) for i in a[-1]]
     elif _Ver == 2:
-        a = re.findall('crop,x_(\d+),y_(\d+),w_(\d+),h_(\d+)', option)
+        x = re.findall(',x_(\d+)', option)
+        x = int(x[-1]) if x else x
+        y = re.findall(',y_(\d+)', option)
+        y = int(y[-1]) if y else y
+        w = re.findall(',w_(\d+)', option)
+        w = int(w[-1]) if w else w
+        h = re.findall(',h_(\d+)', option)
+        h = int(h[-1]) if h else h
+        a = all([x, y, w, h])
 
     if a:
-        x, y, w, h = [int(i) for i in a[-1]]
         w = w or width
         h = h or height
         if x < width and y < height:
