@@ -99,7 +99,7 @@ def version2(request, object_name, option):
     img = cv2.imread(os.path.join(STATIC, bucket, object_name))
     height, width = img.shape[:2]
     ext = re.findall('/format,(\w+)', option)
-    ext = ext[0] if ext else '.jpg'
+    ext = '.' + ext[0] if ext else '.jpg'
 
     for cmd in option.split('/'):
         if cmd.startswith('resize'):
