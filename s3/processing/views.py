@@ -9,6 +9,7 @@ import cv2
 import json
 import os
 import re
+from PIL import Image
 from django.http import HttpResponse, HttpResponseRedirect
 from s3.constants import STATIC
 
@@ -22,6 +23,8 @@ def processing(request, name):
     elif 'x-oss-process' in request.GET:
         object_name = name
         option = request.GET.get('x-oss-process')
+        if option == 'image/info':
+            return info(request, object_name)
         return version2(request, object_name, option)
     else:
         return HttpResponseRedirect('/%s/%s' % (bucket, name))
@@ -118,3 +121,15 @@ def version2(request, object_name, option):
     except Exception, e:
         print e
         return HttpResponseRedirect('/%s/%s' % (bucket, object_name))
+
+
+def info(request, object_name):
+    img_path = os.path.join(STATIC, bucket, object_name)
+    im = Image.open(img_path)
+    data = {
+        'FileSize': {'value': os.stat(img_path).st_size},
+        'Format': {'value': im.format},
+        'ImageHeight': {'value': im.height},
+        'ImageWidth': {'value': im.width}
+    }
+    return HttpResponse(json.dumps(data), content_type='application/json')
